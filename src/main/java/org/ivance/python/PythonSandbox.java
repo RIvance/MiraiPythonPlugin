@@ -81,7 +81,7 @@ public class PythonSandbox {
 
     public String eval(String rawScript) throws PythonScriptUnsafeException {
         for (String keyword : bannedKeywords) {
-            String patten = "*[\\W]*" + keyword + "[\\W]**";
+            String patten = "[\\s\\S]*[\\W]*" + keyword + "[\\W]*[\\s\\S]*";
             if (rawScript.matches(patten)) {
                 throw new PythonScriptUnsafeException();
             }
