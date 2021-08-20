@@ -1,0 +1,3 @@
+name: MiraiPythonPlugin
+main: org.ivance.PluginMain
+version: 1.0
