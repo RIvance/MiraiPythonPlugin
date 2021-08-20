@@ -5,7 +5,6 @@ import org.python.core.PyUnicode;
 import org.python.util.PythonInterpreter;
 
 import java.io.ByteArrayOutputStream;
-import java.util.regex.Pattern;
 
 public class PythonSandbox {
 
@@ -45,23 +44,26 @@ public class PythonSandbox {
 
     public PythonSandbox() {
         this.bannedKeywords = defaultBannedKeywords;
+        this.initScriptTemplate = defaultInitScriptTemplate;
         init();
     }
 
     public PythonSandbox(boolean allowSystemPermissions) {
         if (!allowSystemPermissions) {
             this.bannedKeywords = defaultBannedKeywords;
+            this.initScriptTemplate = defaultInitScriptTemplate;
             init();
         }
     }
 
     public PythonSandbox(String initScriptTemplate) {
-        this.initScriptTemplate += initScriptTemplate;
+        this.initScriptTemplate = defaultInitScriptTemplate + initScriptTemplate;
         init();
     }
 
     public PythonSandbox(String ... bannedKeywords) {
         this.bannedKeywords = bannedKeywords;
+        this.initScriptTemplate = defaultInitScriptTemplate;
         init();
     }
 
