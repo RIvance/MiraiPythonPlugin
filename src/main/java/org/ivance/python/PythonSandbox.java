@@ -8,7 +8,7 @@ import java.io.ByteArrayOutputStream;
 
 public class PythonSandbox {
 
-    private final PythonInterpreter interpreter = new PythonInterpreter();
+    private PythonInterpreter interpreter = new PythonInterpreter();
 
     private boolean autoClearOutput = true;
     private final ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
@@ -65,6 +65,13 @@ public class PythonSandbox {
     public PythonSandbox(String ... bannedKeywords) {
         this.bannedKeywords = bannedKeywords;
         this.initScriptTemplate = defaultInitScriptTemplate;
+        init();
+    }
+
+    public void reset() {
+        interpreter.cleanup();
+        interpreter.close();
+        interpreter = new PythonInterpreter();
         init();
     }
 
