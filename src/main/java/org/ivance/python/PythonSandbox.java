@@ -29,8 +29,8 @@ public class PythonSandbox {
         "        del __builtins__.__dict__[keyword]         \n"
     );
 
-    enum ExecuteCondition {
-        DEFAULT, SUCCEED, FAIL
+    public enum ExecuteCondition {
+        DEFAULT, SUCCEED, FAIL, BLOCKED
     }
 
     private ExecuteCondition executeCondition = ExecuteCondition.DEFAULT;
@@ -78,6 +78,7 @@ public class PythonSandbox {
         interpreter.cleanup();
         interpreter.close();
         interpreter = new PythonInterpreter();
+        outputBuffer.reset();
         init();
     }
 
@@ -101,7 +102,8 @@ public class PythonSandbox {
         for (String keyword : bannedKeywords) {
             String patten = "(([\\s\\S]*\\W)|[\\W]*)" + keyword + "([\\W]*|(\\W[\\s\\S]*))";
             if (rawScript.matches(patten)) {
-                throw new PythonScriptUnsafeException("Script contains banned keyword \"" + keyword + "\"");
+                this.executeCondition = ExecuteCondition.BLOCKED;
+                throw new PythonScriptUnsafeException("Script contains keyword \"" + keyword + "\", which maybe unsafe");
             }
         }
 
@@ -119,5 +121,13 @@ public class PythonSandbox {
             clearBuffer();
         }
         return result;
+    }
+
+    public String tryExec(String rawScript) {
+        try {
+            return this.exec(rawScript);
+        } catch (PythonScriptUnsafeException exception) {
+            return exception.getMessage();
+        }
     }
 }
