@@ -90,6 +90,14 @@ public class PythonSandbox {
         outputBuffer.reset();
     }
 
+    public void addExternalSitePackages(String path) {
+        this.unsafeExec(
+            "import sys\n" +
+            "sys.path.append('" + path  + "')\n" +
+            "del sys"
+        );
+    }
+
     public String getBufferedOutput() {
         return outputBuffer.toString();
     }
