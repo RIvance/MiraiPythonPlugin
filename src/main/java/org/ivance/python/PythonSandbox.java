@@ -36,7 +36,7 @@ public class PythonSandbox {
         }
 
         String initScript = initScriptTemplate.replace("${banned_keywords}", bannedKeywordsBuilder.toString());
-        interpreter.eval(initScript);
+        interpreter.exec(initScript);
 
         interpreter.setOut(outputBuffer);
         interpreter.setErr(outputBuffer);
@@ -57,6 +57,7 @@ public class PythonSandbox {
     }
 
     public PythonSandbox(String initScriptTemplate) {
+        this.bannedKeywords = defaultBannedKeywords;
         this.initScriptTemplate = defaultInitScriptTemplate + initScriptTemplate;
         init();
     }
@@ -79,7 +80,7 @@ public class PythonSandbox {
         return outputBuffer.toString();
     }
 
-    public String eval(String rawScript) throws PythonScriptUnsafeException {
+    public String exec(String rawScript) throws PythonScriptUnsafeException {
         for (String keyword : bannedKeywords) {
             String patten = "(([\\s\\S]*\\W)|[\\W]*)" + keyword + "([\\W]*|(\\W[\\s\\S]*))";
             if (rawScript.matches(patten)) {
@@ -88,7 +89,7 @@ public class PythonSandbox {
         }
 
         PyString script = new PyUnicode(rawScript);
-        interpreter.eval(script);
+        interpreter.exec(script);
 
         String result = outputBuffer.toString();
         if (autoClearOutput) {
