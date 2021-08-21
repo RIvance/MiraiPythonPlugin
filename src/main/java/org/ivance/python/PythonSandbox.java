@@ -98,6 +98,22 @@ public class PythonSandbox {
         return this.executeCondition;
     }
 
+    public boolean unsafeExec(String rawScript) {
+        try {
+            interpreter.setOut(System.out);
+            interpreter.setErr(System.err);
+            PyString script = new PyUnicode(rawScript);
+            interpreter.exec(script);
+            return true;
+        } catch (RuntimeException exception) {
+            exception.printStackTrace();
+            return false;
+        } finally {
+            interpreter.setOut(outputBuffer);
+            interpreter.setErr(outputBuffer);
+        }
+    }
+
     public String exec(String rawScript) throws PythonScriptUnsafeException {
         for (String keyword : bannedKeywords) {
             String patten = "(([\\s\\S]*\\W)|[\\W]*)" + keyword + "([\\W]*|(\\W[\\s\\S]*))";
