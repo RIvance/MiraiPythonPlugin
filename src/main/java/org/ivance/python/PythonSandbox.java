@@ -29,6 +29,12 @@ public class PythonSandbox {
         "        del __builtins__.__dict__[keyword]         \n"
     );
 
+    enum ExecuteCondition {
+        DEFAULT, SUCCEED, FAIL
+    }
+
+    private ExecuteCondition executeCondition = ExecuteCondition.DEFAULT;
+
     private void init() {
         StringBuilder bannedKeywordsBuilder = new StringBuilder();
         for (String keyword : defaultBannedKeywords) {
@@ -87,6 +93,10 @@ public class PythonSandbox {
         return outputBuffer.toString();
     }
 
+    public ExecuteCondition getLastExecuteCondition() {
+        return this.executeCondition;
+    }
+
     public String exec(String rawScript) throws PythonScriptUnsafeException {
         for (String keyword : bannedKeywords) {
             String patten = "(([\\s\\S]*\\W)|[\\W]*)" + keyword + "([\\W]*|(\\W[\\s\\S]*))";
@@ -96,12 +106,18 @@ public class PythonSandbox {
         }
 
         PyString script = new PyUnicode(rawScript);
-        interpreter.exec(script);
+        try {
+            interpreter.exec(script);
+            this.executeCondition = ExecuteCondition.SUCCEED;
+        } catch (RuntimeException exception) {
+            exception.printStackTrace();
+            this.executeCondition = ExecuteCondition.FAIL;
+        }
 
         String result = outputBuffer.toString();
         if (autoClearOutput) {
             clearBuffer();
         }
-        return result.trim();
+        return result;
     }
 }
