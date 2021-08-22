@@ -2,6 +2,10 @@ package org.ivance;
 
 import net.mamoe.mirai.console.plugin.jvm.JavaPlugin;
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescriptionBuilder;
+import net.mamoe.mirai.contact.Contact;
+import net.mamoe.mirai.contact.User;
+import net.mamoe.mirai.event.GlobalEventChannel;
+import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.utils.MiraiLogger;
 import org.ivance.annotation.CommandHandler;
 import org.ivance.annotation.HandlerSingleton;
@@ -29,17 +33,21 @@ public class MiraiPluginMain extends JavaPlugin {
     }
 
     @Override
-    @SuppressWarnings({"rawtypes", "unchecked"})
     public void onEnable() {
         MiraiLogger logger = getLogger();
 
         // TODO: log enable info and warning
+        loadHandlers();
+        registerListeners();
+    }
 
-        // Load message handlers
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void loadHandlers() {
+        MiraiLogger logger = getLogger();
+
         try {
-            /* load message handlers begin */
             List<Class> messageHandlerClasses = Reflect.getAnnotatedClasses(
-                "org.ivance.handler", HandlerSingleton.class
+                    "org.ivance.handler", HandlerSingleton.class
             );
 
             BiConsumer<Method, Class> tryCreateInstanceFunction = (Method method, Class clazz) -> {
@@ -79,14 +87,52 @@ public class MiraiPluginMain extends JavaPlugin {
                     }
                 }
             }
-            /* load message handlers end */
         }
         catch (Exception exception) {
             logger.error("Fail to load message handlers, plugin \"org.ivance.MiraiPluginMain\" will be disabled");
             throw new RuntimeException("Fail to load message handlers");
         }
+    }
 
-        // TODO: register listener
-        // Register Listener
+    private void registerListeners() {
+        GlobalEventChannel.INSTANCE.subscribeAlways(MessageEvent.class, (MessageEvent messageEvent) -> {
+            String message = messageEvent.getMessage().contentToString();
+            Contact contact = messageEvent.getSubject();
+            User sender = messageEvent.getSender();
+
+            commandHandlerMap.forEach((String command, Method method) -> {
+                if (message.startsWith(command)) {
+                    String[] arguments = message.split("\\s[\\s]*");
+                    tryInvokeHandler(method, contact, sender, arguments);
+                }
+            });
+
+            prefixedHandlerMap.forEach((String prefix, Method method) -> {
+                if (message.startsWith(prefix)) {
+                    String messageBody = message.substring(prefix.length()).trim();
+                    tryInvokeHandler(method, contact, sender, messageBody);
+                }
+            });
+
+            regexHandlerMap.forEach((String pattern, Method method) -> {
+                if (message.matches(pattern)) {
+                    tryInvokeHandler(method, contact, sender, message);
+                }
+            });
+        });
+    }
+
+    private void tryInvokeHandler(Method method, Contact contact, User sender, Object argument) {
+        MiraiLogger logger = getLogger();
+        try {
+            method.invoke(handlerInstancesMap.get(method), contact, sender, argument);
+        } catch (ReflectiveOperationException exception) {
+            logger.error("Cannot invoke handler \"" + method.getClass() + "." + method.getName() + "\"");
+        } catch (Exception exception) {
+            logger.warning(
+                "Handler \"" + method.getClass() + "." + method.getName() +
+                "\" throws exception:" + exception.getMessage()
+            );
+        }
     }
 }

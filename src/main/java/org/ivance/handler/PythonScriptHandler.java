@@ -8,6 +8,8 @@ import org.ivance.annotation.PrefixedHandler;
 import org.ivance.python.PythonSandbox;
 import org.ivance.python.PythonScriptUnsafeException;
 
+import java.io.File;
+
 @HandlerSingleton
 @SuppressWarnings("unused")
 public class PythonScriptHandler {
@@ -30,9 +32,17 @@ public class PythonScriptHandler {
         sandbox.reset();
     }
 
+    // TODO: Add Permission System
     @CommandHandler(command = "!addpacks")
     public void addSitePackages(Contact contact, User sender, String[] arguments) {
-        sandbox.addExternalSitePackages(arguments[1]);
+        String path = arguments[1];
+        File dir = new File(path);
+        if (dir.exists() && dir.isDirectory()) {
+            sandbox.addExternalSitePackages(arguments[1]);
+            contact.sendMessage("Successfully added site-packages directory");
+        } else {
+            contact.sendMessage("Directory \"" + path + "\" does not exist");
+        }
     }
 
     @CommandHandler(command = "!execcond")
