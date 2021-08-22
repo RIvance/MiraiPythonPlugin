@@ -2,6 +2,7 @@ package org.ivance.reflect;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.*;
 
@@ -14,20 +15,20 @@ public class Reflect {
      * @return The classes
      */
     @SuppressWarnings("rawtypes")
-    public static List<Class> getScannableClasses(
-            String packageName) throws ClassNotFoundException, IOException {
-        return getScannableClasses(packageName, Scannable.class);
+    public static List<Class> getScannableClasses(String packageName) throws ClassNotFoundException, IOException {
+        return getAnnotatedClasses(packageName, Scannable.class);
     }
 
     /**
-     * Scans all classes accessible with subclass of the annotation <code>Scannable</code>
-     *  from the context class loader which belong to the given package and subpackages.
+     * Scans all annotated classes accessible from the context class loader
+     *  which belong to the given package and subpackages.
      * @param packageName The base package
+     * @param annotation The annotation class
      * @return The classes
      */
     @SuppressWarnings("rawtypes")
-    public static <ScannableExtended extends Scannable> List<Class> getScannableClasses(
-        String packageName, Class<ScannableExtended> scannableAnnotation
+    public static List<Class> getAnnotatedClasses(
+        String packageName, Class<? extends Annotation> annotation
     ) throws ClassNotFoundException, IOException {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         assert classLoader != null;
@@ -43,20 +44,21 @@ public class Reflect {
 
         ArrayList<Class> classes = new ArrayList<>();
         for (File directory : dirs) {
-            classes.addAll(findScannableClasses(directory, packageName, scannableAnnotation));
+            classes.addAll(findScannableClasses(directory, packageName, annotation));
         }
         return classes;
     }
 
     /**
-     * Recursive method used to find all classes in a given directory and subdirs.
+     * Recursive method used to find all annotated classes in a given directory and subdirs.
      * @param directory   The base directory
      * @param packageName The package name for classes found inside the base directory
+     * @param annotation The annotation class
      * @return The classes
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static <ScannableExtended extends Scannable> List<Class> findScannableClasses(
-        File directory, String packageName, Class<ScannableExtended> scannableAnnotation
+    private static List<Class> findScannableClasses(
+        File directory, String packageName, Class<? extends Annotation> annotation
     ) throws ClassNotFoundException {
 
         List<Class> classes = new ArrayList<>();
@@ -73,11 +75,11 @@ public class Reflect {
             if (file.isDirectory()) {
                 assert !file.getName().contains(".");
                 classes.addAll(findScannableClasses(
-                    file, packageName + "." + file.getName(), scannableAnnotation
+                    file, packageName + "." + file.getName(), annotation
                 ));
             } else if (file.getName().endsWith(".class")) {
                 Class clazz = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
-                if (clazz.isAnnotationPresent(scannableAnnotation)) {
+                if (clazz.isAnnotationPresent(annotation)) {
                     classes.add(clazz);
                 }
             }
