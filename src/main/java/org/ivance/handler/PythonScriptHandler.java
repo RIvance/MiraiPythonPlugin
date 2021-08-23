@@ -54,6 +54,18 @@ public class PythonScriptHandler {
         sandbox.reset();
     }
 
+    @CommandHandler(command = "!import")
+    public void importPackage(Contact contact, User sender, String[] arguments) {
+        try {
+            String result = sandbox.exec("import " + arguments[1]).trim();
+            if (!result.isEmpty()) {
+                contact.sendMessage(result);
+            }
+        } catch (PythonScriptUnsafeException exception) {
+            contact.sendMessage(exception.getMessage());
+        }
+    }
+
     // TODO: Add Permission System
     @CommandHandler(command = "!addpacks")
     public void addSitePackages(Contact contact, User sender, String[] arguments) {
