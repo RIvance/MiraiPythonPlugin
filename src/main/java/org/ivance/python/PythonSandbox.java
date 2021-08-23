@@ -20,7 +20,7 @@ public class PythonSandbox {
     private final String[] defaultBannedKeywords = {
         "os", "sys", "pickle", "commands", "subprocess",    // modules
         "eval", "exec", "open", "input", "compile", "dir",  // functions
-        "__builtins__", "__import__",
+        "__builtins__",
     };
 
     private final String defaultInitScriptTemplate = (
