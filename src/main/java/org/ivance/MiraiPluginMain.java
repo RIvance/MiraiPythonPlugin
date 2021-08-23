@@ -1,6 +1,5 @@
 package org.ivance;
 
-import lombok.val;
 import net.mamoe.mirai.console.plugin.jvm.JavaPlugin;
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescriptionBuilder;
 import net.mamoe.mirai.contact.Contact;
@@ -20,7 +19,6 @@ import org.reflections.util.ConfigurationBuilder;
 
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 public class MiraiPluginMain extends JavaPlugin {
 
@@ -37,13 +35,13 @@ public class MiraiPluginMain extends JavaPlugin {
     @Override
     public void onEnable() {
         MiraiLogger logger = getLogger();
-        loadHandlers();
-        registerListeners();
-        logger.info("PythonPlugin is enabled");
+        logger.info("Initializing PythonPlugin");
         logger.warning("This plugin uses a simple sandbox to prevent file access, " +
                 "but it is not 100 percent safe, please be careful when use this " +
                 "plugin and make sure that the bot service is running in a docker"
         );
+        loadHandlers();
+        registerListeners();
     }
 
     private void loadHandlers() {
@@ -62,38 +60,26 @@ public class MiraiPluginMain extends JavaPlugin {
             Set<Class<?>> handlerClasses = reflections.getTypesAnnotatedWith(HandlerSingleton.class);
             logger.info("Handler classes found: " + Arrays.toString(handlerClasses.toArray()));
 
-            BiConsumer<Method, Class<?>> tryCreateInstanceFunction = (Method method, Class<?> clazz) -> {
-                if (handlerInstancesMap.containsKey(method)) {
-                    handlerInstancesMap.put(method, handlerInstancesMap.get(method));
-                } else {
-                    try {
-                        handlerInstancesMap.put(method, clazz.getConstructor().newInstance());
-                        logger.info("Handler loaded: \"" + method.getName() + "\"");
-                    } catch (ReflectiveOperationException exception) {
-                        logger.error("Fail to load handler \"" + method.getName() + "\"");
-                    }
-                }
-            };
-
             for (Class<?> clazz : handlerClasses) {
+                Object handler = clazz.getConstructor().newInstance();
                 for (Method method : clazz.getDeclaredMethods()) {
                     // CommandHandler
                     if (method.isAnnotationPresent(CommandHandler.class)) {
-                        tryCreateInstanceFunction.accept(method, clazz);
-                        for (String prefix : method.getAnnotation(CommandHandler.class).command()) {
-                            commandHandlerMap.put(prefix, method);
+                        handlerInstancesMap.put(method, handler);
+                        for (String command : method.getAnnotation(CommandHandler.class).command()) {
+                            commandHandlerMap.put(command, method);
                         }
                     }
                     // PrefixedHandler
                     else if (method.isAnnotationPresent(PrefixedHandler.class)) {
-                        tryCreateInstanceFunction.accept(method, clazz);
+                        handlerInstancesMap.put(method, handler);
                         for (String prefix : method.getAnnotation(PrefixedHandler.class).prefix()) {
                             prefixedHandlerMap.put(prefix, method);
                         }
                     }
                     // RegexHandler
                     else if (method.isAnnotationPresent(RegexHandler.class)) {
-                        tryCreateInstanceFunction.accept(method, clazz);
+                        handlerInstancesMap.put(method, handler);
                         for (String pattern : method.getAnnotation(RegexHandler.class).pattern()) {
                             regexHandlerMap.put(pattern, method);
                         }
