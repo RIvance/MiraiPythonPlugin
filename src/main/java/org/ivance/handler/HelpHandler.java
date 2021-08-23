@@ -1,2 +1,8 @@
-package org.ivance.handler;public class HelpHandler {
+package org.ivance.handler;
+
+import org.ivance.annotation.HandlerSingleton;
+
+@HandlerSingleton
+public class HelpHandler {
+
 }

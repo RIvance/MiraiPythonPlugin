@@ -1,7 +1,9 @@
 package org.ivance.annotation;
 
-import org.ivance.reflect.Scannable;
+import java.lang.annotation.*;
 
-@Scannable
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
 public @interface HandlerSingleton {
 }
