@@ -9,18 +9,42 @@ import org.ivance.python.PythonSandbox;
 import org.ivance.python.PythonScriptUnsafeException;
 
 import java.io.File;
+import java.util.Random;
 
 @HandlerSingleton
 @SuppressWarnings("unused")
 public class PythonScriptHandler {
     private final PythonSandbox sandbox = new PythonSandbox();
+    private final Random random = new Random();
     private int counter = 0;
 
-    @PrefixedHandler(prefix = {"!py", "!python", "!exec", "#python", "# python"})
+    @PrefixedHandler(prefix = {"!python", "!py", "!exec", "#python", "# python"})
     public void exec(Contact contact, User sender, String script) {
         try {
             String result = sandbox.exec(script).trim();
-            contact.sendMessage("Out[" + counter + "]: " + result);
+            if (result.contains("\n")) {
+                contact.sendMessage("Out[" + counter + "]:\n" + result);
+            } else {
+                contact.sendMessage("Out[" + counter + "]: "  + result);
+            }
+        } catch (PythonScriptUnsafeException exception) {
+            contact.sendMessage(exception.getMessage());
+        }
+    }
+
+    @PrefixedHandler(prefix = {"!calculate", "!calc", "!print"})
+    public void calculate(Contact contact, User sender, String expression) {
+        try {
+            if (expression.contains("\n") || expression.contains("\r")) {
+                contact.sendMessage("Illegal expression");
+            }
+            String resultIdentifier = "calc_result_" + random.nextInt();
+            sandbox.exec(resultIdentifier + " = " + expression);
+            if (sandbox.getLastExecuteCondition() == PythonSandbox.ExecuteCondition.SUCCEED) {
+                contact.sendMessage(sandbox.getPythonObject(resultIdentifier).toString());
+            } else {
+                contact.sendMessage("Illegal expression: " + expression);
+            }
         } catch (PythonScriptUnsafeException exception) {
             contact.sendMessage(exception.getMessage());
         }
