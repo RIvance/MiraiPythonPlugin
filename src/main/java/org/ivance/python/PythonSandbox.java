@@ -1,5 +1,6 @@
 package org.ivance.python;
 
+import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
 import org.python.util.PythonInterpreter;
@@ -153,5 +154,21 @@ public class PythonSandbox {
         } catch (PythonScriptUnsafeException exception) {
             return exception.getMessage();
         }
+    }
+
+    public PyObject getPythonObject(String identifier) {
+        return interpreter.get(identifier);
+    }
+
+    public <JavaClassType> JavaClassType getPythonObject(String identifier, Class<JavaClassType> javaClass) {
+        return interpreter.get(identifier, javaClass);
+    }
+
+    public void setPythonObject(String identifier, PyObject pythonObject) {
+        interpreter.set(identifier, pythonObject);
+    }
+
+    public void setPythonObject(String identifier, Object object) {
+        interpreter.set(identifier, object);
     }
 }
