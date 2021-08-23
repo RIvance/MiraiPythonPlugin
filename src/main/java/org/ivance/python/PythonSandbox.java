@@ -123,16 +123,20 @@ public class PythonSandbox {
         }
     }
 
-    public String exec(String rawScript) throws PythonScriptUnsafeException {
+    private void ensureSafety(String script) throws PythonScriptUnsafeException {
         for (String keyword : bannedKeywords) {
             String patten = "(([\\s\\S]*\\W)|[\\W]*)" + keyword + "([\\W]*|(\\W[\\s\\S]*))";
-            if (rawScript.matches(patten)) {
+            if (script.matches(patten)) {
                 this.executeCondition = ExecuteCondition.BLOCKED;
                 throw new PythonScriptUnsafeException("Script contains keyword \"" + keyword + "\", which maybe unsafe");
             }
         }
+    }
 
+    public String exec(String rawScript) throws PythonScriptUnsafeException {
+        ensureSafety(rawScript);
         PyString script = new PyUnicode(rawScript);
+
         try {
             interpreter.exec(script);
             this.executeCondition = ExecuteCondition.SUCCEED;
@@ -154,6 +158,11 @@ public class PythonSandbox {
         } catch (PythonScriptUnsafeException exception) {
             return exception.getMessage();
         }
+    }
+
+    public String eval(String expression) throws PythonScriptUnsafeException {
+        ensureSafety(expression);
+        return interpreter.eval(expression).toString();
     }
 
     public PyObject getPythonObject(String identifier) {
