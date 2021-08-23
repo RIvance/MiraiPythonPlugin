@@ -23,9 +23,9 @@ public class PythonScriptHandler {
         try {
             String result = sandbox.exec(script).trim();
             if (result.contains("\n")) {
-                contact.sendMessage("Out[" + counter + "]:\n" + result);
+                contact.sendMessage("Out[" + counter++ + "]:\n" + result);
             } else {
-                contact.sendMessage("Out[" + counter + "]: "  + result);
+                contact.sendMessage("Out[" + counter++ + "]: "  + result);
             }
         } catch (PythonScriptUnsafeException exception) {
             contact.sendMessage(exception.getMessage());
@@ -38,7 +38,7 @@ public class PythonScriptHandler {
             if (expression.contains("\n") || expression.contains("\r")) {
                 contact.sendMessage("Illegal expression");
             }
-            String resultIdentifier = "calc_result_" + random.nextInt();
+            String resultIdentifier = "calc_result_" + Math.abs(random.nextInt());
             sandbox.exec(resultIdentifier + " = " + expression);
             if (sandbox.getLastExecuteCondition() == PythonSandbox.ExecuteCondition.SUCCEED) {
                 contact.sendMessage(sandbox.getPythonObject(resultIdentifier).toString());
@@ -69,7 +69,7 @@ public class PythonScriptHandler {
         }
     }
 
-    @CommandHandler(command = "!execcond")
+    @CommandHandler(command = "!cond")
     public void printLastCondition(Contact contact, User sender, String[] arguments) {
         switch (sandbox.getLastExecuteCondition()) {
             case DEFAULT:
